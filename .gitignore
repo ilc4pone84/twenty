@@ -54,3 +54,7 @@ TRANSLATION_QA_REPORT.md
 .playwright-mcp/
 .playwright-cli/
 output/playwright/
+
+.github/agents/
+.github/prompts/
+.github/skills/

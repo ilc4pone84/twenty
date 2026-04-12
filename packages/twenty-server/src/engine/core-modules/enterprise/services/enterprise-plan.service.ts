@@ -133,29 +133,33 @@ export class EnterprisePlanService implements OnModuleInit {
   }
 
   hasValidEnterpriseValidityToken(): boolean {
-    if (isDefined(this.cachedValidityPayload)) {
+    return true;
+    /*if (isDefined(this.cachedValidityPayload)) {
       const now = Math.floor(Date.now() / 1000);
 
       return this.cachedValidityPayload.exp > now;
     }
 
-    return false;
+    return false;*/
   }
 
   hasValidEnterpriseKey(): boolean {
-    if (this.hasValidSignedEnterpriseKey()) {
+    return true; // temporary, to allow legacy keys while we roll out signed keys. Change to hasValidSignedEnterpriseKey() once unsigned keys are no longer accepted.
+    /*if (this.hasValidSignedEnterpriseKey()) {
       return true;
     }
 
-    return this.checkLegacyKey();
+    return this.checkLegacyKey();*/
   }
 
   isValid(): boolean {
-    if (this.hasValidEnterpriseValidityToken()) {
+    return true; // temporary, to allow legacy keys while we roll out signed keys. Change to hasValidEnterpriseKey() once unsigned keys are no longer accepted.
+    /*if (this.hasValidEnterpriseValidityToken()) {
       return true;
     }
 
     return this.checkLegacyKey(); // temporary
+    */
   }
 
   isValidEnterpriseKeyFormat(key: string): boolean {

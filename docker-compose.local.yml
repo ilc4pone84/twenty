@@ -1,0 +1,95 @@
+name: twenty-local
+
+x-twenty-build: &twenty-build
+  context: .
+  dockerfile: packages/twenty-docker/twenty/Dockerfile
+  target: twenty
+  args:
+    REACT_APP_SERVER_BASE_URL: ${REACT_APP_SERVER_BASE_URL:-http://localhost:3000}
+    APP_VERSION: ${APP_VERSION:-0.0.0}
+
+x-twenty-env: &twenty-env
+  NODE_PORT: 3000
+  PG_DATABASE_URL: postgres://${PG_DATABASE_USER:-postgres}:${PG_DATABASE_PASSWORD:-postgres}@db:${PG_DATABASE_PORT:-5432}/${PG_DATABASE_NAME:-default}
+  SERVER_URL: ${SERVER_URL:-http://localhost:3000}
+  REDIS_URL: ${REDIS_URL:-redis://redis:6379}
+  DISABLE_DB_MIGRATIONS: ${DISABLE_DB_MIGRATIONS:-false}
+  DISABLE_CRON_JOBS_REGISTRATION: ${DISABLE_CRON_JOBS_REGISTRATION:-false}
+  IS_CONFIG_VARIABLES_IN_DB_ENABLED: ${IS_CONFIG_VARIABLES_IN_DB_ENABLED:-false}
+  STORAGE_TYPE: ${STORAGE_TYPE:-local}
+  APP_SECRET: ${APP_SECRET:-replace_me_with_a_random_string}
+  APP_VERSION: ${APP_VERSION:-0.0.0}
+
+services:
+  server:
+    build: *twenty-build
+    image: twenty-local:dev
+    ports:
+      - "3000:3000"
+    environment:
+      <<: *twenty-env
+    volumes:
+      - server-local-data:/app/packages/twenty-server/.local-storage
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "--fail", "http://localhost:3000/healthz"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+    restart: unless-stopped
+
+  worker:
+    build: *twenty-build
+    image: twenty-local:dev
+    command: ["yarn", "worker:prod"]
+    environment:
+      <<: *twenty-env
+      DISABLE_DB_MIGRATIONS: "true"
+      DISABLE_CRON_JOBS_REGISTRATION: "true"
+    volumes:
+      - server-local-data:/app/packages/twenty-server/.local-storage
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      server:
+        condition: service_healthy
+    restart: unless-stopped
+
+  db:
+    image: postgres:16
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_DB: ${PG_DATABASE_NAME:-default}
+      POSTGRES_USER: ${PG_DATABASE_USER:-postgres}
+      POSTGRES_PASSWORD: ${PG_DATABASE_PASSWORD:-postgres}
+    volumes:
+      - db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${PG_DATABASE_USER:-postgres} -h localhost -d postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
+
+  redis:
+    image: redis:7
+    ports:
+      - "6379:6379"
+    command: ["--maxmemory-policy", "noeviction"]
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
+
+volumes:
+  db-data:
+  server-local-data:
