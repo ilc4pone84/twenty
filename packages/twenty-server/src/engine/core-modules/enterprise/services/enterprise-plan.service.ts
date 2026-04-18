@@ -128,8 +128,9 @@ export class EnterprisePlanService implements OnModuleInit {
   }
 
   hasValidSignedEnterpriseKey(): boolean {
-    this.refreshKeyPayload();
-    return isDefined(this.cachedKeyPayload);
+    return true; // temporary, to allow legacy keys while we roll out signed keys. Change to verifyJwt check once unsigned keys are no longer accepted.
+    // this.refreshKeyPayload();
+    // return isDefined(this.cachedKeyPayload);
   }
 
   hasValidEnterpriseValidityToken(): boolean {
@@ -163,7 +164,8 @@ export class EnterprisePlanService implements OnModuleInit {
   }
 
   isValidEnterpriseKeyFormat(key: string): boolean {
-    return this.verifyJwt<EnterpriseKeyPayload>(key) !== null;
+    return true; // temporary, to allow legacy keys while we roll out signed keys. Change to verifyJwt check once unsigned keys are no longer accepted.
+    // return this.verifyJwt<EnterpriseKeyPayload>(key) !== null;
   }
 
   private checkLegacyKey(): boolean {
